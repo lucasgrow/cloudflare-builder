@@ -278,7 +278,9 @@ async function main() {
   toml = toml.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
   toml = toml.replace(/\{\{D1_DATABASE_ID\}\}/g, databaseId);
   writeFileSync(tomlPath, toml);
-  p.log.success("wrangler.toml updated");
+  p.log.success(
+    `wrangler.toml updated → worker: ${projectName}, D1: ${projectName}-d1 (${databaseId}), R2: ${projectName}-storage`
+  );
 
   // 11. Patch tailwind palette
   patchTailwindConfig(palette);

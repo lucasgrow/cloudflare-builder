@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 // ── NextAuth tables ──────────────────────────────────────────────
 
@@ -11,7 +12,7 @@ export const users = sqliteTable("user", {
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
   createdAt: integer("createdAt", { mode: "timestamp" })
     .notNull()
-    .$defaultFn(() => new Date()),
+    .default(sql`(unixepoch())`),
 });
 
 export const accounts = sqliteTable(
@@ -68,8 +69,8 @@ export const userSettings = sqliteTable("user_settings", {
   theme: text("theme", { enum: ["light", "dark", "system"] }).default("system"),
   createdAt: integer("createdAt", { mode: "timestamp" })
     .notNull()
-    .$defaultFn(() => new Date()),
+    .default(sql`(unixepoch())`),
   updatedAt: integer("updatedAt", { mode: "timestamp" })
     .notNull()
-    .$defaultFn(() => new Date()),
+    .default(sql`(unixepoch())`),
 });

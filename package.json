@@ -19,7 +19,6 @@
     "db:studio:prod": "NODE_ENV=production drizzle-kit studio"
   },
   "dependencies": {
-    "@auth/drizzle-adapter": "^1.4.2",
     "@heroui/react": "^2.8.5",
     "@heroui/theme": "^2.4.23",
     "@iconify/react": "^6.0.2",
@@ -40,11 +39,14 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@clack/prompts": "^0.8.2",
     "@cloudflare/workers-types": "^4.20240903.0",
+    "@iarna/toml": "^2.2.5",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "agentation": "^2.2.0",
     "better-sqlite3": "^12.6.2",
     "drizzle-kit": "^0.31.5",
     "eslint": "^8",
@@ -52,9 +54,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
-    "wrangler": "^4.42.0",
-    "@clack/prompts": "^0.8.2",
-    "@iarna/toml": "^2.2.5"
+    "wrangler": "^4.42.0"
   },
   "overrides": {
     "@heroui/theme": {
