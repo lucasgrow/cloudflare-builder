@@ -19,6 +19,21 @@ bun dev
 
 When a user asks for help setting up, walk them through these steps:
 
+### Step 0: Create your project
+This repo is a template. The first thing to do is create your own repo from it:
+
+1. Go to the template repo on GitHub → click **"Use this template"** → **"Create a new repository"**
+2. Name it with your product name (e.g. `my-saas`, `acme-app`) — lowercase, hyphens only
+3. Clone your new repo locally:
+   ```bash
+   git clone https://github.com/YOUR_USER/your-product-name.git
+   cd your-product-name
+   ```
+
+This name matters — `bun run setup` will ask for a project name and use it for the D1 database (`name-d1`), R2 bucket (`name-storage`), and Cloudflare Worker. Use the same name as your repo for consistency.
+
+> If the user already cloned/forked, skip this step — just confirm what project name they'll use in setup.
+
 ### Prerequisites
 Check: `bun --version` (need 1.1+), `node --version` (need 18+), `npx wrangler --version`.
 If missing, link to https://bun.sh and https://nodejs.org.
@@ -76,6 +91,49 @@ Only needed if the app uses file uploads.
 - **D1 not found**: Run `npx wrangler d1 list` to verify the database exists. Re-run `bun run setup` if needed.
 - **Resend won't send**: Free tier only sends to your account email. Verify domain at https://resend.com/domains.
 - **`env validation failed`**: Check `.dev.vars` has all required auth vars filled in (AUTH_SECRET, AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET, AUTH_RESEND_KEY, AUTH_EMAIL_FROM).
+
+## Building Features (post-setup)
+
+Once the app is running locally, the next step is defining **what this product is**. Every feature follows the task-based workflow:
+
+### Flow
+1. User describes the product vision / next feature
+2. Create `tasks/task-N-desc/spec.md` with the plan
+3. Human reviews — asks questions, flags gaps/risks
+4. Iterate spec until solid
+5. Human says OK → implement step by step, one commit per step
+6. Branch: `lucas/task-N-desc`
+
+### What uses tasks/
+- New features, pages, API routes
+- Architectural changes (new DB tables, auth flows, integrations)
+- Multi-file debugging sessions
+
+### What skips tasks/
+- Bug fixes, small refactors, < 3 files
+- Spikes / throwaway prototypes
+- Single-file changes with clear intent
+
+### Quality gates (every commit)
+1. Run relevant tests (if exist)
+2. Lint/format (if configured)
+3. Only commit if passes — fix, don't skip
+
+### Spec template
+```markdown
+# Task N: Short title
+
+## Goal
+What and why, 1-2 sentences.
+
+## Changes
+(use the tree + changes format from CLAUDE.md global instructions)
+
+## Open questions
+- ?
+```
+
+The idea: this repo is a **template**. After setup it's a blank SaaS shell. The user defines the product, and we build it feature by feature through specs → review → implement → commit.
 
 ## Stack
 

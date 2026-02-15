@@ -22,11 +22,13 @@ SaaS starter template on Cloudflare. Auth, database, storage, and deploy — all
 
 ## Getting Started
 
+1. Click **"Use this template"** on GitHub to create your own repo
+2. Clone and set up:
 ```bash
-git clone https://github.com/youruser/cloudflare-builder.git
-cd cloudflare-builder
+git clone https://github.com/YOU/your-product-name.git
+cd your-product-name
 bun install
-bun run setup
+bun run setup   # use the same name as your repo
 bun dev
 ```
 
