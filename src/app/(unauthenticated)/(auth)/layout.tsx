@@ -11,7 +11,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-[radial-gradient(ellipse_at_top,var(--heroui-content2)_0%,transparent_60%)] px-4 py-8">
       {children}
     </div>
   );
