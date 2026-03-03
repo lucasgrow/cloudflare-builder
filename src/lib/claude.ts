@@ -44,7 +44,7 @@ export async function extractBriefing(opts: {
   const client = getClient();
 
   const response = await client.messages.create({
-    model: "minimax/minimax-m1-80k",
+    model: "minimax/minimax-m2.5",
     max_tokens: 4096,
     system: SYSTEM_PROMPT,
     messages: [
