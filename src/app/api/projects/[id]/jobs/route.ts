@@ -5,6 +5,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { createBatchJobsSchema, createEditJobSchema } from "@/lib/schemas/job";
 import { enqueueJob } from "@/lib/queue";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }

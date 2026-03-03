@@ -25,6 +25,7 @@ migrations_dir = "./drizzle"
 binding = "STORAGE"
 bucket_name = "creative-post-storage"
 
-[[queues.producers]]
-binding = "GENERATION_QUEUE"
-queue = "creative-post-jobs"
+# Queue disabled — CF queue creation failed, using fallback in queue.ts
+# [[queues.producers]]
+# binding = "GENERATION_QUEUE"
+# queue = "creative-post-jobs"

@@ -5,6 +5,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { createBriefingSchema } from "@/lib/schemas/briefing";
 import { extractBriefing } from "@/lib/claude";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }

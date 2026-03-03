@@ -3,6 +3,8 @@ import { auth } from "@/server/auth";
 import { generatePresignedUploadUrl } from "@/lib/r2";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 const uploadSchema = z.object({
   filename: z.string().min(1),
   contentType: z.string().min(1),

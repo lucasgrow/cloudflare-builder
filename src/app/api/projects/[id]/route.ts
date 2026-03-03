@@ -3,6 +3,8 @@ import { auth } from "@/server/auth";
 import { getDb, projects, projectRefs, jobs } from "@/server/db";
 import { eq, and, count } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }

@@ -11,7 +11,7 @@ function getClient(): Anthropic {
     let apiKey: string | undefined;
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getCloudflareContext } = require("@opennextjs/cloudflare");
+      const { getCloudflareContext } = eval("require")("@opennextjs/cloudflare");
       const { env } = getCloudflareContext();
       apiKey = (env as CloudflareEnv).OPENROUTER_API_KEY;
     } catch {

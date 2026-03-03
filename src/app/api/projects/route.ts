@@ -4,6 +4,8 @@ import { getDb, projects } from "@/server/db";
 import { eq, desc } from "drizzle-orm";
 import { createProjectSchema } from "@/lib/schemas/project";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
