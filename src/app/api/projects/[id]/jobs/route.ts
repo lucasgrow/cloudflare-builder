@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { getDb, jobs, projects, templates } from "@/server/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { createBatchJobsSchema, createEditJobSchema } from "@/lib/schemas/job";
 import { enqueueJob } from "@/lib/queue";
 
@@ -51,7 +51,7 @@ export async function POST(
   const project = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.createdBy, session.user.id)))
+    .where(eq(projects.id, id))
     .get();
 
   if (!project) {
