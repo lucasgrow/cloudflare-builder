@@ -11,14 +11,7 @@ export default function GeneratePage() {
   const [creatives, setCreatives] = useState<ExtractedCreative[] | null>(null);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Generate Creatives</h1>
-        <p className="text-default-500 text-small mt-1">
-          Paste a briefing, review extracted creatives, then generate.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {!creatives ? (
         <BriefingForm projectId={id} onExtracted={setCreatives} />
       ) : (
