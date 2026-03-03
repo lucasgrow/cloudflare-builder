@@ -3,7 +3,7 @@ import { auth } from "@/server/auth";
 import { getDb, jobs, projects, templates } from "@/server/db";
 import { eq, desc } from "drizzle-orm";
 import { createBatchJobsSchema, createEditJobSchema } from "@/lib/schemas/job";
-import { enqueueJob } from "@/lib/queue";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const dynamic = "force-dynamic";
 
@@ -93,17 +93,8 @@ export async function POST(
       createdBy: session.user.id,
     });
 
-    await enqueueJob({
-      jobId,
-      projectId: id,
-      templateId: parentJob.templateId,
-      headline: parentJob.headline,
-      benefits: parentJob.benefitsJson ? JSON.parse(parentJob.benefitsJson) : undefined,
-      ctaText: parentJob.ctaText,
-      keywords: parentJob.keywordsJson ? JSON.parse(parentJob.keywordsJson) : undefined,
-      parentJobId: editParsed.data.parentJobId,
-      editPrompt: editParsed.data.editPrompt,
-    });
+    // Fire-and-forget: trigger processing via self-reference
+    triggerProcessing(id, jobId);
 
     return NextResponse.json({ jobIds: [jobId] }, { status: 201 });
   }
@@ -147,18 +138,29 @@ export async function POST(
       createdBy: session.user.id,
     });
 
-    await enqueueJob({
-      jobId,
-      projectId: id,
-      templateId: jobInput.templateId,
-      headline: jobInput.headline,
-      benefits: jobInput.benefits,
-      ctaText: jobInput.ctaText,
-      keywords: jobInput.keywords,
-    });
+    // Fire-and-forget: trigger processing via self-reference
+    triggerProcessing(id, jobId);
 
     jobIds.push(jobId);
   }
 
   return NextResponse.json({ jobIds }, { status: 201 });
+}
+
+function triggerProcessing(projectId: string, jobId: string) {
+  try {
+    const { env } = getCloudflareContext();
+    const selfWorker = (env as CloudflareEnv).WORKER_SELF_REFERENCE;
+    if (selfWorker) {
+      // Use service binding to call process endpoint (fire-and-forget)
+      selfWorker.fetch(
+        new Request(
+          `https://internal/api/projects/${projectId}/jobs/${jobId}/process`,
+          { method: "POST" }
+        )
+      ).catch((e: unknown) => console.error("Process trigger failed:", e));
+    }
+  } catch (e) {
+    console.error("Could not trigger processing:", e);
+  }
 }
