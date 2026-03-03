@@ -8,14 +8,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string; jobId: string }> }
+  { params }: { params: { id: string; jobId: string } }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { jobId } = await params;
+  const { jobId } = params;
   const db = getDb();
 
   const job = await db

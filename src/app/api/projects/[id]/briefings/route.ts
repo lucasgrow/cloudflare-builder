@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { getDb, briefings, projects } from "@/server/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { createBriefingSchema } from "@/lib/schemas/briefing";
 import { extractBriefing } from "@/lib/claude";
 
@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
   const db = getDb();
 
   const rows = await db
@@ -35,14 +35,14 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { id } = params;
   const body = await req.json();
   const parsed = createBriefingSchema.safeParse(body);
   if (!parsed.success) {
@@ -57,7 +57,7 @@ export async function POST(
   const project = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.createdBy, session.user.id)))
+    .where(eq(projects.id, id))
     .get();
 
   if (!project) {
