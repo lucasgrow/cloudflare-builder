@@ -22,11 +22,11 @@ interface GalleryGridProps {
   projectId: string;
 }
 
-const STATUS_CONFIG: Record<string, { color: "warning" | "primary" | "success" | "danger"; icon: string }> = {
-  queued: { color: "warning", icon: "solar:clock-circle-linear" },
-  processing: { color: "primary", icon: "solar:refresh-circle-linear" },
-  done: { color: "success", icon: "solar:check-circle-linear" },
-  failed: { color: "danger", icon: "solar:close-circle-linear" },
+const STATUS_CONFIG: Record<string, { color: "warning" | "primary" | "success" | "danger"; icon: string; label: string }> = {
+  queued: { color: "primary", icon: "solar:refresh-circle-linear", label: "Gerando..." },
+  processing: { color: "primary", icon: "solar:refresh-circle-linear", label: "Gerando..." },
+  done: { color: "success", icon: "solar:check-circle-linear", label: "Pronto" },
+  failed: { color: "danger", icon: "solar:close-circle-linear", label: "Erro" },
 };
 
 export function GalleryGrid({ projectId }: GalleryGridProps) {
@@ -115,7 +115,7 @@ export function GalleryGrid({ projectId }: GalleryGridProps) {
                   />
                 ) : (
                   <div className="w-full aspect-[3/4] flex flex-col items-center justify-center gap-2 bg-default-50">
-                    {job.status === "processing" ? (
+                    {(job.status === "processing" || job.status === "queued") ? (
                       <Spinner size="lg" />
                     ) : (
                       <Icon
@@ -137,7 +137,7 @@ export function GalleryGrid({ projectId }: GalleryGridProps) {
                       variant="flat"
                       startContent={<Icon icon={config.icon} width={12} />}
                     >
-                      {job.status}
+                      {config.label}
                     </Chip>
                     {job.parentJobId && (
                       <Chip size="sm" variant="flat">

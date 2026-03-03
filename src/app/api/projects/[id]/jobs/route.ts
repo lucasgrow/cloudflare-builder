@@ -152,15 +152,23 @@ export async function POST(
 
 function triggerProcessing(projectId: string, jobId: string) {
   try {
-    const { env } = getCloudflareContext();
+    const { ctx, env } = getCloudflareContext();
     const selfWorker = (env as CloudflareEnv).WORKER_SELF_REFERENCE;
-    if (selfWorker) {
-      // Use service binding to call process endpoint (fire-and-forget)
-      selfWorker.fetch(
-        new Request(
-          `https://internal/api/projects/${projectId}/jobs/${jobId}/process`,
-          { method: "POST" }
-        )
+    if (selfWorker && ctx?.waitUntil) {
+      // Fire-and-forget via waitUntil — runs after response is sent
+      ctx.waitUntil(
+        selfWorker.fetch(
+          new Request(
+            `https://internal/api/projects/${projectId}/jobs/${jobId}/process`,
+            { method: "POST" }
+          )
+        ).catch((e: unknown) => console.error("Process trigger failed:", e))
+      );
+    } else {
+      // Fallback: direct fetch (won't block response thanks to no await)
+      fetch(
+        `https://creative-post.lucas-f58.workers.dev/api/projects/${projectId}/jobs/${jobId}/process`,
+        { method: "POST" }
       ).catch((e: unknown) => console.error("Process trigger failed:", e));
     }
   } catch (e) {
