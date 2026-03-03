@@ -11,7 +11,7 @@ max_retries = 2
 [[d1_databases]]
 binding = "DATABASE"
 database_name = "creative-post-d1"
-database_id = "placeholder"
+database_id = "375e6765-0182-4a8e-9b0a-ebea5ef1cf69"
 
 [[r2_buckets]]
 binding = "STORAGE"
