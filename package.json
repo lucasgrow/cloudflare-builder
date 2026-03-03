@@ -19,6 +19,7 @@
     "db:studio:prod": "NODE_ENV=production drizzle-kit studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@heroui/react": "^2.8.5",
     "@heroui/theme": "^2.4.23",
     "@iconify/react": "^6.0.2",
