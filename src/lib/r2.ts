@@ -68,3 +68,58 @@ export async function generatePresignedUploadUrl(
     expiresIn,
   };
 }
+
+export async function generatePresignedReadUrl(opts: {
+  key: string;
+  expiresIn?: number;
+}): Promise<string> {
+  const { AwsClient } = await import("aws4fetch");
+
+  let cfEnv: Partial<CloudflareEnv> | null = null;
+  try {
+    cfEnv = getCloudflareContext().env as Partial<CloudflareEnv>;
+  } catch {
+    // local dev fallback
+  }
+
+  const accountId = cfEnv?.R2_ACCOUNT_ID ?? validatedEnv.R2_ACCOUNT_ID;
+  const accessKeyId = cfEnv?.R2_ACCESS_KEY_ID ?? validatedEnv.R2_ACCESS_KEY_ID;
+  const secretAccessKey =
+    cfEnv?.R2_SECRET_ACCESS_KEY ?? validatedEnv.R2_SECRET_ACCESS_KEY;
+  const bucketName = cfEnv?.R2_BUCKET_NAME ?? validatedEnv.R2_BUCKET_NAME;
+
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
+    throw new Error("R2 not configured for read URLs.");
+  }
+
+  const client = new AwsClient({ accessKeyId, secretAccessKey });
+  const expiresIn = opts.expiresIn ?? 3600;
+
+  const url = new URL(
+    `https://${accountId}.r2.cloudflarestorage.com/${bucketName}/${opts.key}`
+  );
+  url.searchParams.set("X-Amz-Expires", String(expiresIn));
+
+  const signed = await client.sign(
+    new Request(url.toString(), { method: "GET" }),
+    { aws: { signQuery: true } }
+  );
+
+  return signed.url;
+}
+
+export function getProjectAssetKey(
+  projectId: string,
+  filename: string,
+  type: "logo-dark" | "logo-light" | "photo" | "extra" | "ref" | "output"
+): string {
+  const prefixes: Record<string, string> = {
+    "logo-dark": `projects/${projectId}/assets/logo-dark`,
+    "logo-light": `projects/${projectId}/assets/logo-light`,
+    photo: `projects/${projectId}/assets/photo-professional`,
+    extra: `projects/${projectId}/assets/extra/${filename}`,
+    ref: `projects/${projectId}/refs/${filename}`,
+    output: `projects/${projectId}/outputs/${filename}`,
+  };
+  return prefixes[type] ?? `projects/${projectId}/${filename}`;
+}
