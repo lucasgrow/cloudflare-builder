@@ -1,31 +1,21 @@
-import Anthropic from "@anthropic-ai/sdk";
 import {
   extractedBriefingSchema,
   type ExtractedCreative,
 } from "./schemas/briefing";
 
-let _client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!_client) {
-    let apiKey: string | undefined;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getCloudflareContext } = eval("require")("@opennextjs/cloudflare");
-      const { env } = getCloudflareContext();
-      apiKey = (env as CloudflareEnv).OPENROUTER_API_KEY;
-    } catch {
-      // not in cloudflare context
-    }
-    apiKey = apiKey || process.env.OPENROUTER_API_KEY;
-    if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
-
-    _client = new Anthropic({
-      apiKey,
-      baseURL: "https://openrouter.ai/api/v1",
-    });
+function getApiKey(): string {
+  let apiKey: string | undefined;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = eval("require")("@opennextjs/cloudflare");
+    const { env } = getCloudflareContext();
+    apiKey = (env as CloudflareEnv).OPENROUTER_API_KEY;
+  } catch {
+    // not in cloudflare context
   }
-  return _client;
+  apiKey = apiKey || process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+  return apiKey;
 }
 
 const SYSTEM_PROMPT = `You extract structured ad creative specs from medical marketing briefings.
@@ -41,27 +31,43 @@ export async function extractBriefing(opts: {
   projectName: string;
   specialty?: string;
 }): Promise<ExtractedCreative[]> {
-  const client = getClient();
+  const apiKey = getApiKey();
 
-  const response = await client.messages.create({
-    model: "minimax/minimax-m2.5",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Project: ${opts.projectName}
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "minimax/minimax-m2.5",
+      max_tokens: 4096,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Project: ${opts.projectName}
 ${opts.specialty ? `Specialty: ${opts.specialty}` : ""}
 
 Briefing:
 ${opts.inputText}
 
 Extract all creatives as JSON.`,
-      },
-    ],
+        },
+      ],
+    }),
   });
 
-  const text = response.content.find((b) => b.type === "text")?.text ?? "{}";
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenRouter ${res.status}: ${err}`);
+  }
+
+  const data = (await res.json()) as {
+    choices: { message: { content: string } }[];
+  };
+
+  const text = data.choices?.[0]?.message?.content ?? "{}";
   const cleaned = text.replace(/```json?\n?/g, "").replace(/```$/g, "").trim();
   const parsed = JSON.parse(cleaned);
   const validated = extractedBriefingSchema.parse(parsed);
