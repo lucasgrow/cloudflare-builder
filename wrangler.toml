@@ -24,3 +24,7 @@ migrations_dir = "./drizzle"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "creative-post-storage"
+
+[[queues.producers]]
+binding = "GENERATION_QUEUE"
+queue = "creative-post-jobs"

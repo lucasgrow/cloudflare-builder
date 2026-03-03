@@ -16,7 +16,9 @@
     "db:migrate:dev": "drizzle-kit migrate",
     "db:migrate:prod": "NODE_ENV=production drizzle-kit migrate",
     "db:studio:dev": "drizzle-kit studio",
-    "db:studio:prod": "NODE_ENV=production drizzle-kit studio"
+    "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
+    "worker:dev": "wrangler dev --config wrangler.worker.toml",
+    "worker:deploy": "wrangler deploy --config wrangler.worker.toml"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
