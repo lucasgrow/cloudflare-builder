@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { getDb, projects, projectRefs, jobs } from "@/server/db";
-import { eq, and, count } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export async function GET(
   const project = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.createdBy, session.user.id)))
+    .where(eq(projects.id, id))
     .get();
 
   if (!project) {
@@ -62,7 +62,7 @@ export async function PATCH(
   const existing = await db
     .select()
     .from(projects)
-    .where(and(eq(projects.id, id), eq(projects.createdBy, session.user.id)))
+    .where(eq(projects.id, id))
     .get();
 
   if (!existing) {

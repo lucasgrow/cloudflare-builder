@@ -27,8 +27,11 @@ export default function ProjectOverviewPage() {
 
   useEffect(() => {
     fetch(`/api/projects/${id}`)
-      .then((r) => r.json() as Promise<ProjectDetail>)
-      .then(setProject)
+      .then((r) => {
+        if (!r.ok) return null;
+        return r.json() as Promise<ProjectDetail>;
+      })
+      .then((data) => { if (data) setProject(data); })
       .finally(() => setLoading(false));
   }, [id]);
 
