@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { getDb, jobs } from "@/server/db";
 import { eq } from "drizzle-orm";
-import { generatePresignedReadUrl } from "@/lib/r2";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string; jobId: string } }
 ) {
   const session = await auth();
@@ -16,8 +16,10 @@ export async function GET(
   }
 
   const { jobId } = params;
-  const db = getDb();
+  const url = new URL(req.url);
+  const wantImage = url.searchParams.get("image") === "1";
 
+  const db = getDb();
   const job = await db
     .select()
     .from(jobs)
@@ -28,12 +30,20 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  let outputUrl: string | null = null;
-  if (job.outputR2Key) {
+  // Serve image directly from R2 binding
+  if (wantImage && job.outputR2Key) {
     try {
-      outputUrl = await generatePresignedReadUrl({ key: job.outputR2Key });
+      const { env } = getCloudflareContext();
+      const bucket = (env as CloudflareEnv).STORAGE;
+      const obj = await bucket.get(job.outputR2Key);
+      if (obj) {
+        const headers = new Headers();
+        headers.set("Content-Type", obj.httpMetadata?.contentType ?? "image/jpeg");
+        headers.set("Cache-Control", "public, max-age=86400");
+        return new Response(obj.body, { headers });
+      }
     } catch {
-      // R2 not configured, return key only
+      // fall through
     }
   }
 
@@ -41,6 +51,8 @@ export async function GET(
     ...job,
     benefits: job.benefitsJson ? JSON.parse(job.benefitsJson) : [],
     keywords: job.keywordsJson ? JSON.parse(job.keywordsJson) : [],
-    outputUrl,
+    outputUrl: job.outputR2Key
+      ? `/api/projects/${params.id}/jobs/${jobId}?image=1`
+      : null,
   });
 }

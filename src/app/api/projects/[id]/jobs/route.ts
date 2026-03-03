@@ -30,6 +30,9 @@ export async function GET(
       ...r,
       benefits: r.benefitsJson ? JSON.parse(r.benefitsJson) : [],
       keywords: r.keywordsJson ? JSON.parse(r.keywordsJson) : [],
+      outputUrl: r.outputR2Key
+        ? `/api/projects/${id}/jobs/${r.id}?image=1`
+        : null,
     }))
   );
 }
