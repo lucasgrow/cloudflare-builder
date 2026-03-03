@@ -19,7 +19,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     fetch("/api/projects")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<Project[]>)
       .then((data) => setProjects(data))
       .finally(() => setLoading(false));
   }, []);
