@@ -8,19 +8,33 @@ let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
   if (!_client) {
-    // Try cloudflare env first, then process.env
     let apiKey: string | undefined;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getCloudflareContext } = require("@opennextjs/cloudflare");
       const { env } = getCloudflareContext();
-      apiKey = (env as CloudflareEnv).ANTHROPIC_API_KEY;
+      apiKey = (env as CloudflareEnv).OPENROUTER_API_KEY;
     } catch {
       // not in cloudflare context
     }
-    _client = new Anthropic(apiKey ? { apiKey } : undefined);
+    apiKey = apiKey || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+
+    _client = new Anthropic({
+      apiKey,
+      baseURL: "https://openrouter.ai/api/v1",
+    });
   }
   return _client;
 }
+
+const SYSTEM_PROMPT = `You extract structured ad creative specs from medical marketing briefings.
+Given a briefing text and project context, extract individual creatives.
+Each creative needs: headline, benefits (3 max), CTA text, keywords (1-2), suggested template.
+Templates available: checklist-split, centralizado, checklist-clean, checklist-dark, half-half, card-foto.
+Output ONLY valid JSON matching this schema, no markdown fences:
+{ "creatives": [{ "headline": string, "benefits": string[], "ctaText": string, "keywords": string[], "suggestedTemplate": string }] }
+PT-BR text. Keep headlines short (max 8 words). Benefits 4-7 words each.`;
 
 export async function extractBriefing(opts: {
   inputText: string;
@@ -30,15 +44,9 @@ export async function extractBriefing(opts: {
   const client = getClient();
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "minimax/minimax-m1-80k",
     max_tokens: 4096,
-    system: `You extract structured ad creative specs from medical marketing briefings.
-Given a briefing text and project context, extract individual creatives.
-Each creative needs: headline, benefits (3 max), CTA text, keywords (1-2), suggested template.
-Templates available: checklist-split, centralizado, checklist-clean, checklist-dark, half-half, card-foto.
-Output ONLY valid JSON matching this schema, no markdown fences:
-{ "creatives": [{ "headline": string, "benefits": string[], "ctaText": string, "keywords": string[], "suggestedTemplate": string }] }
-PT-BR text. Keep headlines short (max 8 words). Benefits 4-7 words each.`,
+    system: SYSTEM_PROMPT,
     messages: [
       {
         role: "user",

@@ -13,7 +13,7 @@ R2_ACCOUNT_ID=
 R2_BUCKET_NAME=
 
 # Creative Post — AI keys
-ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-v1-...
 GEMINI_API_KEY=
 
 # Google OAuth redirect URI (add this in Google Cloud Console):
