@@ -115,7 +115,9 @@ export async function POST(
       }
     } else {
       const isDarkStyle = ["checklist-split", "checklist-dark", "centralizado"].includes(template.slug);
-      const logoKey = isDarkStyle ? project.logo_dark_r2_key : project.logo_light_r2_key;
+      const logoKey = isDarkStyle
+        ? (project.logo_dark_r2_key ?? project.logo_light_r2_key)
+        : (project.logo_light_r2_key ?? project.logo_dark_r2_key);
 
       if (logoKey) {
         const logoData = await fetchR2AsBase64(storage, logoKey);

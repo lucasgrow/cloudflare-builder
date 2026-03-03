@@ -6,7 +6,7 @@ interface PromptInput {
   benefits?: string[];
   ctaText: string;
   keywords?: string[];
-  palette: { accent: string; dark: string; light?: string; text?: string; muted?: string };
+  palette: Record<string, string>;
   logoDescription?: string;
   promptInjection: string;
   photoDescription?: string;
@@ -16,13 +16,14 @@ interface PromptInput {
 
 export function buildGenerationPrompt(input: PromptInput): string {
   let prompt = input.templatePrompt;
+  const p = input.palette;
 
   const replacements: Record<string, string> = {
-    "[DARK_BG_COLOR]": input.palette.dark,
-    "[ACCENT_COLOR]": input.palette.accent,
-    "[LIGHT_BG_COLOR]": input.palette.light ?? "#F5F0EB",
-    "[TEXT_DARK_COLOR]": input.palette.text ?? "#1A1A1A",
-    "[TEXT_LIGHT_COLOR]": input.palette.muted ?? "#E8E8E8",
+    "[DARK_BG_COLOR]": p.primaryDark ?? p.dark ?? "#2C2C2C",
+    "[ACCENT_COLOR]": p.accent ?? "#B8964E",
+    "[LIGHT_BG_COLOR]": p.backgroundLight ?? p.light ?? "#F5F0EB",
+    "[TEXT_DARK_COLOR]": p.textDark ?? p.text ?? "#1A1A1A",
+    "[TEXT_LIGHT_COLOR]": p.textLight ?? p.muted ?? "#E8E8E8",
     "[HEADLINE]": input.headline,
     "[BENEFIT_1]": input.benefits?.[0] ?? "",
     "[BENEFIT_2]": input.benefits?.[1] ?? "",
