@@ -74,22 +74,34 @@ export async function POST(
     createdBy: session.user.id,
   });
 
-  // Extract creatives via Claude
-  const creatives = await extractBriefing({
-    inputText: parsed.data.inputText,
-    projectName: project.name,
-  });
+  // Extract creatives via OpenRouter
+  try {
+    const creatives = await extractBriefing({
+      inputText: parsed.data.inputText,
+      projectName: project.name,
+    });
 
-  await db
-    .update(briefings)
-    .set({
-      extractedJson: JSON.stringify({ creatives }),
-      status: "processed",
-    })
-    .where(eq(briefings.id, briefingId));
+    await db
+      .update(briefings)
+      .set({
+        extractedJson: JSON.stringify({ creatives }),
+        status: "processed",
+      })
+      .where(eq(briefings.id, briefingId));
 
-  return NextResponse.json(
-    { id: briefingId, creatives, status: "processed" },
-    { status: 201 }
-  );
+    return NextResponse.json(
+      { id: briefingId, creatives, status: "processed" },
+      { status: 201 }
+    );
+  } catch (err) {
+    console.error("Briefing extraction failed:", err);
+    await db
+      .update(briefings)
+      .set({ status: "error" })
+      .where(eq(briefings.id, briefingId));
+    return NextResponse.json(
+      { error: "Extraction failed", details: String(err) },
+      { status: 500 }
+    );
+  }
 }
