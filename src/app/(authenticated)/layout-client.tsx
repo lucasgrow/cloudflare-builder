@@ -21,11 +21,13 @@ import { useTheme } from "@/hooks/use-theme";
 
 const sidebarItems: SidebarItem[] = [
   { key: "dashboard", href: "/dashboard", icon: "solar:home-2-linear", title: "Dashboard" },
+  { key: "projects", href: "/projects", icon: "solar:folder-linear", title: "Projects" },
   { key: "settings", href: "/settings", icon: "solar:settings-linear", title: "Settings" },
 ];
 
 const mobileNavItems = [
   { key: "dashboard", href: "/dashboard", icon: "solar:home-2-bold", title: "Dashboard" },
+  { key: "projects", href: "/projects", icon: "solar:folder-bold", title: "Projects" },
   { key: "settings", href: "/settings", icon: "solar:settings-bold", title: "Settings" },
 ];
 
@@ -37,6 +39,10 @@ interface LayoutUser {
 
 const breadcrumbLabels: Record<string, string> = {
   dashboard: "Dashboard",
+  projects: "Projects",
+  new: "New Project",
+  generate: "Generate",
+  gallery: "Gallery",
   settings: "Settings",
 };
 
