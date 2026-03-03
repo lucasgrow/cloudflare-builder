@@ -16,7 +16,6 @@ export async function GET() {
   const rows = await db
     .select()
     .from(projects)
-    .where(eq(projects.createdBy, session.user.id))
     .orderBy(desc(projects.createdAt));
 
   return NextResponse.json(rows);
