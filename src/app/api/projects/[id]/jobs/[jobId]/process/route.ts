@@ -32,11 +32,7 @@ export async function POST(
   _req: Request,
   { params }: { params: { id: string; jobId: string } }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  // Auth skipped — this endpoint is called internally via service binding
   const { id: projectId, jobId } = params;
   const { env } = getCloudflareContext();
   const cfEnv = env as CloudflareEnv;
