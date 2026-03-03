@@ -18,6 +18,8 @@ export const env = createEnv({
     R2_SECRET_ACCESS_KEY: optionalEnv,
     R2_ACCOUNT_ID: optionalEnv,
     R2_BUCKET_NAME: optionalEnv,
+    ANTHROPIC_API_KEY: optionalEnv,
+    GEMINI_API_KEY: optionalEnv,
   },
   experimental__runtimeEnv: process.env,
   skipValidation: process.env.SKIP_ENV_VALIDATION === "1",

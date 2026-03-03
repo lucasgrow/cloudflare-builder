@@ -8,7 +8,16 @@ let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
   if (!_client) {
-    _client = new Anthropic();
+    // Try cloudflare env first, then process.env
+    let apiKey: string | undefined;
+    try {
+      const { getCloudflareContext } = require("@opennextjs/cloudflare");
+      const { env } = getCloudflareContext();
+      apiKey = (env as CloudflareEnv).ANTHROPIC_API_KEY;
+    } catch {
+      // not in cloudflare context
+    }
+    _client = new Anthropic(apiKey ? { apiKey } : undefined);
   }
   return _client;
 }
