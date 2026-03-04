@@ -5,6 +5,7 @@ export interface AgentContext {
   projectId: string;
 }
 
+// Keep in sync with process/route.ts when adding new templates
 const DARK_BG_STYLES = [
   "checklist-split",
   "checklist-dark",
