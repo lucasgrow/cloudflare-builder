@@ -16,6 +16,7 @@ interface AgentLoopOptions {
   userMessage: string;
   tools: ToolDefinition[];
   toolHandlers: Record<string, ToolHandler>;
+  model?: string;
   maxTurns?: number;
 }
 
@@ -34,6 +35,7 @@ export async function runAgentLoop(
     userMessage,
     tools,
     toolHandlers,
+    model = "claude-sonnet-4-6-20250514",
     maxTurns = 6,
   } = options;
 
@@ -50,7 +52,7 @@ export async function runAgentLoop(
     turns++;
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-6-20250514",
+      model,
       max_tokens: 4096,
       system: systemPrompt,
       tools: tools as Anthropic.Tool[],
