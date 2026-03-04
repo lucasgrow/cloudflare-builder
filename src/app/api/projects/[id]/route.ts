@@ -27,8 +27,8 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const [refsCount] = await db
-    .select({ count: count() })
+  const refs = await db
+    .select()
     .from(projectRefs)
     .where(eq(projectRefs.projectId, id));
 
@@ -41,7 +41,13 @@ export async function GET(
     ...project,
     palette: JSON.parse(project.paletteJson),
     typography: JSON.parse(project.typographyJson),
-    refsCount: refsCount?.count ?? 0,
+    refs: refs.map((r) => ({
+      id: r.id,
+      type: r.type,
+      label: r.label,
+      r2Key: r.r2Key,
+    })),
+    refsCount: refs.length,
     jobsCount: jobsCount?.count ?? 0,
   });
 }

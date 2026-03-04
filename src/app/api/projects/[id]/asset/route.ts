@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
-import { getDb, projects } from "@/server/db";
-import { eq } from "drizzle-orm";
+import { getDb, projects, projectRefs } from "@/server/db";
+import { eq, and } from "drizzle-orm";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const dynamic = "force-dynamic";
@@ -17,26 +17,43 @@ export async function GET(
 
   const { id } = params;
   const url = new URL(req.url);
-  const type = url.searchParams.get("type"); // logo-dark, logo-light, photo
+  const type = url.searchParams.get("type"); // logo-dark, logo-light, photo, ref
+  const refId = url.searchParams.get("refId"); // for ref type
 
-  const db = getDb();
-  const project = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.id, id))
-    .get();
+  let r2Key: string | null = null;
 
-  if (!project) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (type === "ref" && refId) {
+    // Serve a project ref image
+    const db = getDb();
+    const ref = await db
+      .select()
+      .from(projectRefs)
+      .where(
+        and(eq(projectRefs.id, refId), eq(projectRefs.projectId, id))
+      )
+      .get();
+    r2Key = ref?.r2Key ?? null;
+  } else {
+    // Serve project asset
+    const db = getDb();
+    const project = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, id))
+      .get();
+
+    if (!project) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const keyMap: Record<string, string | null> = {
+      "logo-dark": project.logoDarkR2Key,
+      "logo-light": project.logoLightR2Key,
+      photo: project.photoR2Key,
+    };
+    r2Key = keyMap[type ?? ""] ?? null;
   }
 
-  const keyMap: Record<string, string | null> = {
-    "logo-dark": project.logoDarkR2Key,
-    "logo-light": project.logoLightR2Key,
-    photo: project.photoR2Key,
-  };
-
-  const r2Key = keyMap[type ?? ""];
   if (!r2Key) {
     return NextResponse.json({ error: "Asset not found" }, { status: 404 });
   }

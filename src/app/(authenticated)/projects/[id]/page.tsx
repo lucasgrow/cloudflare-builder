@@ -20,6 +20,13 @@ import {
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
 
+interface ProjectRef {
+  id: string;
+  type: string;
+  label: string | null;
+  r2Key: string;
+}
+
 interface ProjectDetail {
   id: string;
   name: string;
@@ -31,6 +38,7 @@ interface ProjectDetail {
   logoLightR2Key: string | null;
   photoR2Key: string | null;
   promptInjection: string;
+  refs: ProjectRef[];
   refsCount: number;
   jobsCount: number;
   createdAt: string;
@@ -124,6 +132,35 @@ export default function ProjectOverviewPage() {
     }
   };
 
+  const handleExtraPhotoUpload = async (file: File) => {
+    setUploading("extra-photo");
+    try {
+      const key = await uploadFile(file, `projects/${id}/photos`);
+      await fetch(`/api/projects/${id}/refs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          r2Key: key,
+          type: "extra_photo",
+          label: file.name,
+        }),
+      });
+      fetchProject();
+      setCacheBust((n) => n + 1);
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleDeleteRef = async (refId: string) => {
+    await fetch(`/api/projects/${id}/refs`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refId }),
+    });
+    fetchProject();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -139,10 +176,13 @@ export default function ProjectOverviewPage() {
   const hasLogoDark = !!project.logoDarkR2Key;
   const hasLogoLight = !!project.logoLightR2Key;
   const hasPhoto = !!project.photoR2Key;
+  const extraPhotos = project.refs.filter((r) => r.type === "extra_photo");
+  const styleRefs = project.refs.filter((r) => r.type === "style_ref");
 
   return (
     <div className="space-y-6">
-      {/* Logos row */}
+      {/* === LOGOS === */}
+      <SectionHeader icon="solar:star-bold" title="Logos" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <LogoCard
           projectId={id}
@@ -172,17 +212,20 @@ export default function ProjectOverviewPage() {
         />
       </div>
 
-      {/* Photo */}
-      <PhotoCard
+      {/* === FOTOS === */}
+      <SectionHeader icon="solar:camera-bold" title="Fotos Profissionais" />
+      <PhotoGallery
         projectId={id}
-        hasPhoto={hasPhoto}
-        logoDescription={project.logoDescription}
-        uploading={uploading === "photo"}
-        onUpload={(f) => handleAssetUpload("photo", f)}
+        mainPhotoKey={project.photoR2Key}
+        extraPhotos={extraPhotos}
+        uploading={uploading}
+        onMainUpload={(f) => handleAssetUpload("photo", f)}
+        onExtraUpload={handleExtraPhotoUpload}
+        onDeleteRef={handleDeleteRef}
         cacheBust={cacheBust}
       />
 
-      {/* Palette + Typography */}
+      {/* === PALETA + TIPOGRAFIA === */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <PaletteCard
           projectId={id}
@@ -192,14 +235,12 @@ export default function ProjectOverviewPage() {
         <TypographyCard
           projectId={id}
           typography={project.typography}
-          textColor={
-            project.palette.textDark ?? project.palette.text ?? "#1A1A1A"
-          }
+          palette={project.palette}
           onUpdated={fetchProject}
         />
       </div>
 
-      {/* Stats */}
+      {/* === STATS === */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           icon="solar:gallery-bold"
@@ -208,14 +249,9 @@ export default function ProjectOverviewPage() {
           color={project.palette.accent ?? "#B8964E"}
         />
         <StatCard
-          icon="solar:image-bold"
-          label="Assets"
-          value={
-            (hasLogoDark ? 1 : 0) +
-            (hasLogoLight ? 1 : 0) +
-            (hasPhoto ? 1 : 0) +
-            project.refsCount
-          }
+          icon="solar:camera-bold"
+          label="Fotos"
+          value={1 + extraPhotos.length}
           color={project.palette.accent ?? "#B8964E"}
         />
         <StatCard
@@ -231,6 +267,40 @@ export default function ProjectOverviewPage() {
           color={project.palette.accent ?? "#B8964E"}
         />
       </div>
+
+      {/* === LOGO DESCRIPTION === */}
+      {project.logoDescription && (
+        <Card className="border border-divider">
+          <CardBody className="gap-3">
+            <div className="flex items-center gap-2">
+              <Icon
+                icon="solar:document-text-bold"
+                width={18}
+                className="text-default-400"
+              />
+              <h3 className="text-small font-semibold text-default-500 uppercase tracking-wider">
+                Descrição da Marca
+              </h3>
+            </div>
+            <p className="text-default-600 text-small leading-relaxed">
+              {project.logoDescription}
+            </p>
+          </CardBody>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// --- Section Header ---
+
+function SectionHeader({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon icon={icon} width={18} className="text-default-400" />
+      <h2 className="text-small font-semibold text-default-500 uppercase tracking-wider">
+        {title}
+      </h2>
     </div>
   );
 }
@@ -318,93 +388,144 @@ function LogoCard({
   );
 }
 
-// --- Photo Card ---
+// --- Photo Gallery (main + extras) ---
 
-function PhotoCard({
+function PhotoGallery({
   projectId,
-  hasPhoto,
-  logoDescription,
+  mainPhotoKey,
+  extraPhotos,
   uploading,
-  onUpload,
+  onMainUpload,
+  onExtraUpload,
+  onDeleteRef,
   cacheBust,
 }: {
   projectId: string;
-  hasPhoto: boolean;
-  logoDescription: string | null;
-  uploading: boolean;
-  onUpload: (f: File) => void;
+  mainPhotoKey: string | null;
+  extraPhotos: ProjectRef[];
+  uploading: string | null;
+  onMainUpload: (f: File) => void;
+  onExtraUpload: (f: File) => void;
+  onDeleteRef: (refId: string) => void;
   cacheBust: number;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const mainInputRef = useRef<HTMLInputElement>(null);
+  const extraInputRef = useRef<HTMLInputElement>(null);
+
+  const totalPhotos = (mainPhotoKey ? 1 : 0) + extraPhotos.length;
+  const canAddMore = totalPhotos < 6;
 
   return (
-    <Card className="border border-divider overflow-hidden">
-      <CardBody className="p-0">
-        <div className="grid grid-cols-1 md:grid-cols-3">
-          <div
-            className="md:col-span-1 relative group cursor-pointer min-h-[200px] flex items-center justify-center bg-default-100"
-            onClick={() => inputRef.current?.click()}
-          >
-            {uploading ? (
-              <Spinner size="lg" />
-            ) : hasPhoto ? (
-              <>
-                <Image
-                  src={`/api/projects/${projectId}/asset?type=photo&v=${cacheBust}`}
-                  alt="Foto profissional"
-                  className="w-full h-full object-cover aspect-[3/4] md:aspect-auto"
-                  removeWrapper
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
-                  <Icon
-                    icon="solar:upload-bold"
-                    width={32}
-                    className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-default-400 py-12">
-                <Icon icon="solar:camera-add-linear" width={40} />
-                <span className="text-small">Enviar foto</span>
-              </div>
-            )}
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onUpload(f);
-                e.target.value = "";
-              }}
-            />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Main photo */}
+      <div
+        className="relative group cursor-pointer rounded-xl overflow-hidden border border-divider aspect-[3/4]"
+        onClick={() => mainInputRef.current?.click()}
+      >
+        {uploading === "photo" ? (
+          <div className="w-full h-full flex items-center justify-center bg-default-100">
+            <Spinner size="lg" />
           </div>
-          <div className="md:col-span-2 flex flex-col justify-center p-6 gap-3">
-            <div className="flex items-center gap-2">
+        ) : mainPhotoKey ? (
+          <>
+            <Image
+              src={`/api/projects/${projectId}/asset?type=photo&v=${cacheBust}`}
+              alt="Foto principal"
+              className="w-full h-full object-cover"
+              removeWrapper
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
               <Icon
-                icon="solar:camera-bold"
-                width={18}
-                className="text-default-400"
+                icon="solar:upload-bold"
+                width={28}
+                className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
               />
-              <h3 className="text-small font-semibold text-default-500 uppercase tracking-wider">
-                Foto Profissional
-              </h3>
             </div>
-            {logoDescription && (
-              <p className="text-default-600 text-small leading-relaxed">
-                {logoDescription}
-              </p>
-            )}
-            <p className="text-tiny text-default-400">
-              Clique na área à esquerda para {hasPhoto ? "trocar" : "enviar"} a
-              foto.
-            </p>
+            <Chip
+              size="sm"
+              variant="flat"
+              className="absolute top-2 left-2"
+            >
+              Principal
+            </Chip>
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-default-50 text-default-400">
+            <Icon icon="solar:camera-add-linear" width={36} />
+            <span className="text-small">Foto principal</span>
+          </div>
+        )}
+        <input
+          ref={mainInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onMainUpload(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      {/* Extra photos */}
+      {extraPhotos.map((photo) => (
+        <div
+          key={photo.id}
+          className="relative group rounded-xl overflow-hidden border border-divider aspect-[3/4]"
+        >
+          <Image
+            src={`/api/projects/${projectId}/asset?type=ref&refId=${photo.id}&v=${cacheBust}`}
+            alt={photo.label ?? "Foto extra"}
+            className="w-full h-full object-cover"
+            removeWrapper
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+            <Button
+              isIconOnly
+              size="sm"
+              color="danger"
+              variant="flat"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onPress={() => onDeleteRef(photo.id)}
+            >
+              <Icon icon="solar:trash-bin-2-linear" width={16} />
+            </Button>
           </div>
         </div>
-      </CardBody>
-    </Card>
+      ))}
+
+      {/* Add more button */}
+      {canAddMore && (
+        <div
+          className="relative cursor-pointer rounded-xl overflow-hidden border border-dashed border-divider aspect-[3/4] flex flex-col items-center justify-center gap-2 text-default-400 hover:bg-default-50 transition-colors"
+          onClick={() => extraInputRef.current?.click()}
+        >
+          {uploading === "extra-photo" ? (
+            <Spinner size="lg" />
+          ) : (
+            <>
+              <Icon icon="solar:add-circle-linear" width={32} />
+              <span className="text-small">Adicionar foto</span>
+              <span className="text-tiny text-default-300">
+                {totalPhotos}/6
+              </span>
+            </>
+          )}
+          <input
+            ref={extraInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onExtraUpload(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -529,22 +650,28 @@ function PaletteCard({
   );
 }
 
-// --- Typography Card ---
+// --- Typography Card (dark/light preview) ---
 
 function TypographyCard({
   projectId,
   typography,
-  textColor,
+  palette,
   onUpdated,
 }: {
   projectId: string;
   typography: { headline: string; body: string };
-  textColor: string;
+  palette: Record<string, string>;
   onUpdated: () => void;
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editTypo, setEditTypo] = useState(typography);
   const [saving, setSaving] = useState(false);
+
+  const darkBg = palette.primaryDark ?? palette.dark ?? "#2C2C2C";
+  const lightBg = palette.backgroundLight ?? palette.light ?? "#F5F0EB";
+  const textDark = palette.textDark ?? palette.text ?? "#1A1A1A";
+  const textLight = palette.textLight ?? "#FFFFFF";
+  const accent = palette.accent ?? "#B8964E";
 
   const handleSave = async () => {
     setSaving(true);
@@ -584,18 +711,55 @@ function TypographyCard({
               Editar
             </Button>
           </div>
-          <div className="space-y-4">
-            <div>
-              <p className="text-tiny text-default-400 mb-1">Títulos</p>
-              <p className="text-xl font-bold" style={{ color: textColor }}>
-                {typography.headline}
-              </p>
-            </div>
-            <Divider />
-            <div>
-              <p className="text-tiny text-default-400 mb-1">Corpo</p>
-              <p className="text-medium">{typography.body}</p>
-            </div>
+
+          {/* Dark theme preview */}
+          <div
+            className="rounded-xl p-4 space-y-2"
+            style={{ backgroundColor: darkBg }}
+          >
+            <p className="text-tiny uppercase tracking-wider" style={{ color: accent }}>
+              Fundo Escuro
+            </p>
+            <p
+              className="text-lg font-bold leading-tight"
+              style={{ color: "#FFFFFF" }}
+            >
+              {typography.headline}
+            </p>
+            <p className="text-small" style={{ color: textLight }}>
+              {typography.body}
+            </p>
+            <span
+              className="inline-block text-tiny font-bold px-3 py-1 rounded-full"
+              style={{ backgroundColor: accent, color: "#FFFFFF" }}
+            >
+              CTA Exemplo →
+            </span>
+          </div>
+
+          {/* Light theme preview */}
+          <div
+            className="rounded-xl p-4 space-y-2 border border-divider"
+            style={{ backgroundColor: lightBg }}
+          >
+            <p className="text-tiny uppercase tracking-wider" style={{ color: accent }}>
+              Fundo Claro
+            </p>
+            <p
+              className="text-lg font-bold leading-tight"
+              style={{ color: textDark }}
+            >
+              {typography.headline}
+            </p>
+            <p className="text-small" style={{ color: textDark, opacity: 0.7 }}>
+              {typography.body}
+            </p>
+            <span
+              className="inline-block text-tiny font-bold px-3 py-1 rounded-full"
+              style={{ backgroundColor: accent, color: "#FFFFFF" }}
+            >
+              CTA Exemplo →
+            </span>
           </div>
         </CardBody>
       </Card>
