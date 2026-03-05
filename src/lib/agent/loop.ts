@@ -12,6 +12,7 @@ export interface ToolHandler {
 
 interface AgentLoopOptions {
   apiKey: string;
+  baseURL?: string;
   systemPrompt: string;
   userMessage: string;
   tools: ToolDefinition[];
@@ -35,11 +36,12 @@ export async function runAgentLoop(
     userMessage,
     tools,
     toolHandlers,
+    baseURL,
     model = "claude-sonnet-4-6-20250514",
     maxTurns = 6,
   } = options;
 
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) });
 
   const messages: Anthropic.MessageParam[] = [
     { role: "user", content: userMessage },

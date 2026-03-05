@@ -59,6 +59,7 @@ export async function POST(
   try {
     const result = await runAgentLoop({
       apiKey,
+      baseURL: cfEnv.ANTHROPIC_BASE_URL || undefined,
       systemPrompt,
       userMessage: parsed.data.freeText,
       tools: AGENT_TOOLS,
