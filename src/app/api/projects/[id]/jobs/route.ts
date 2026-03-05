@@ -137,6 +137,7 @@ export async function POST(
       benefitsJson: jobInput.benefits ? JSON.stringify(jobInput.benefits) : null,
       ctaText: jobInput.ctaText,
       keywordsJson: jobInput.keywords ? JSON.stringify(jobInput.keywords) : null,
+      refImageR2Key: jobInput.refImageR2Key ?? null,
       status: "queued",
       createdBy: session.user.id,
     });

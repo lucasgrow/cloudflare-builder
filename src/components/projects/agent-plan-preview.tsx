@@ -30,7 +30,7 @@ interface PlanPreviewProps {
 export function AgentPlanPreview({
   projectId,
   plan,
-  refImageR2Key: _refImageR2Key,
+  refImageR2Key,
   onBack,
 }: PlanPreviewProps) {
   const router = useRouter();
@@ -92,6 +92,7 @@ export function AgentPlanPreview({
                 .split(",")
                 .map((s) => s.trim())
                 .filter(Boolean),
+              ...(refImageR2Key ? { refImageR2Key } : {}),
             },
           ],
         }),

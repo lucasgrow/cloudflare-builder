@@ -131,6 +131,12 @@ export async function POST(
       }
     }
 
+    // Add user-provided style reference image
+    if (job.ref_image_r2_key) {
+      const refData = await fetchR2AsBase64(storage, job.ref_image_r2_key);
+      if (refData) parts.push({ inline_data: refData });
+    }
+
     // Call Gemini
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${geminiKey}`,

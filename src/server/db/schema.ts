@@ -125,6 +125,7 @@ export const jobs = sqliteTable("jobs", {
   outputR2Key: text("output_r2_key"),
   parentJobId: text("parent_job_id"),
   editPrompt: text("edit_prompt"),
+  refImageR2Key: text("ref_image_r2_key"),
   createdBy: text("created_by").references(() => users.id),
   createdAt: text("created_at").$defaultFn(() => new Date().toISOString()),
   completedAt: text("completed_at"),

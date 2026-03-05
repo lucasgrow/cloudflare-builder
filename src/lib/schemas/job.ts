@@ -6,6 +6,7 @@ export const createJobSchema = z.object({
   benefits: z.array(z.string()).max(5).optional(),
   ctaText: z.string().min(1),
   keywords: z.array(z.string()).max(5).optional(),
+  refImageR2Key: z.string().optional(),
 });
 
 export const createBatchJobsSchema = z.object({
