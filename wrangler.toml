@@ -1,4 +1,4 @@
-name = "{{PROJECT_NAME}}"
+name = "creative-post"
 main = ".open-next/worker.js"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
@@ -10,17 +10,22 @@ binding = "ASSETS"
 
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
-service = "{{PROJECT_NAME}}"
+service = "creative-post"
 
 [placement]
 mode = "smart"
 
 [[d1_databases]]
 binding = "DATABASE"
-database_name = "{{PROJECT_NAME}}-d1"
-database_id = "{{D1_DATABASE_ID}}"
+database_name = "creative-post-d1"
+database_id = "375e6765-0182-4a8e-9b0a-ebea5ef1cf69"
 migrations_dir = "./drizzle"
 
 [[r2_buckets]]
 binding = "STORAGE"
-bucket_name = "{{PROJECT_NAME}}-storage"
+bucket_name = "creative-post-storage"
+
+# Queue disabled — CF queue creation failed, using fallback in queue.ts
+# [[queues.producers]]
+# binding = "GENERATION_QUEUE"
+# queue = "creative-post-jobs"

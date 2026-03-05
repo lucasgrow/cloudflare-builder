@@ -10,4 +10,9 @@ interface CloudflareEnv {
   R2_SECRET_ACCESS_KEY?: string;
   R2_ACCOUNT_ID?: string;
   R2_BUCKET_NAME?: string;
+  GENERATION_QUEUE?: Queue;
+  OPENROUTER_API_KEY?: string;
+  GEMINI_API_KEY?: string;
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_BASE_URL?: string;
 }
